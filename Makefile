@@ -4,7 +4,7 @@ LIBS = -lncurses
 
 SRC_PATH = src
 OBJ_PATH = obj
-SRC_FILES = main.cpp
+SRC_FILES = main.cpp minivim.cpp buffer.cpp console.cpp
 OBJ_FILES = $(SRC_FILES:%.cpp=%.o)
 SRC = $(addprefix $(SRC_PATH)/, $(SRC_FILES))
 OBJ = $(addprefix $(OBJ_PATH)/, $(OBJ_FILES))
