@@ -1,5 +1,6 @@
 CC = g++
 CFLAGS = -Wall -g -I lib
+LIBS = -lncurses
 
 SRC_PATH = src
 OBJ_PATH = obj
@@ -15,10 +16,10 @@ TARGET = minivim
 all: $(TARGET)
 
 $(TARGET): $(OBJ)
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
 
 $(OBJ_PATH)/%.o: $(SRC_PATH)/%.cpp | $(OBJ_PATH)
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c $< -o $@
 
 $(OBJ_PATH):
 	mkdir -p $(OBJ_PATH) 2>/dev/null
