@@ -1,29 +1,33 @@
 #ifndef CONSOLE_H
 #define CONSOLE_H
 
-#include <vector>
-#include <string>
 #include <ncurses.h>
-#include "cursor.h"
+#include "buffer.h"
 
 class Console {
-  int h, w;
-  Cursor cursor;
+  int height;
+  int width;
+  int viewport_line;
+  int viewport_pos;
 
 public: 
-  Console(int r = 0, int c = 0);
+  Console();
 
   ~Console();
-
-  Cursor& get_cursor_ref() {
-    return cursor;
-  }
 
   int get_char() {
     return getch();
   }
 
-  void render(std::vector<std::string> &buffer);
+  int validate_viewport();
+
+  int render(const Buffer &buffer);
+
+  int backspace(int signal);
+
+  int linefeed();
+
+  int insert_char();
 };
 
 #endif

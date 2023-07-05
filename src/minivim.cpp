@@ -1,5 +1,6 @@
-#include "minivim.h"
 #include <ncurses.h>
+#include "commands.h"
+#include "minivim.h"
 
 int Minivim::run() {
   int ch;
@@ -12,16 +13,24 @@ int Minivim::run() {
       break;
 
       case KEY_BACKSPACE: {
-        buffer.backspace(console.get_cursor_ref());
+        Backspace backspace;
+        backspace.execute(buffer, console);
+      }
+      break;
+
+      case '\n': {
+        Linefeed linefeed;
+        linefeed.execute(buffer, console);
       }
       break;
 
       default: {
-        buffer.insert_char(console.get_cursor_ref(), ch);
+        InsertChar insert_char(ch);
+        insert_char.execute(buffer, console);
       }
       break;
     }
-    console.render(buffer.get_buffer_ref());
+    console.render(buffer);
   }
 
   return 0;
