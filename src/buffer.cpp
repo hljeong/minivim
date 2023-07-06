@@ -1,5 +1,3 @@
-#include <bits/stdc++.h>
-
 #include "buffer.h"
 #include "commands.h"
 #include <fstream>

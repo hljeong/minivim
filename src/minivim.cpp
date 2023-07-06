@@ -2,9 +2,44 @@
 #include "commands.h"
 #include "minivim.h"
 
+int Minivim::init() {
+  commands[INSERT_MODE][KEY_UP] = new CursorUp();
+
+  commands[INSERT_MODE][KEY_DOWN] = new CursorDown();
+
+  commands[INSERT_MODE][KEY_LEFT] = new CursorLeft();
+
+  commands[INSERT_MODE][KEY_RIGHT] = new CursorRight();
+
+  commands[INSERT_MODE][KEY_BACKSPACE] = new Backspace();
+
+  commands[INSERT_MODE]['\n'] = new Linefeed();
+
+  commands[INSERT_MODE]['\t'] = new Tab();
+
+  // todo: magic number printable characters
+  for (int printable = 32; printable <= 126; ++printable) {
+    commands[INSERT_MODE][printable] = new InsertChar(printable);
+  }
+
+  return 0;
+}
+
 int Minivim::run() {
   int ch;
   console.render(buffer);
+
+  while (1) {
+    ch = console.get_char();
+
+    if (ch == KEY_F(4)) {
+      return 0;
+    } else if (commands[mode].find(ch) != commands[mode].end()) {
+      commands[mode][ch]->execute(buffer, console);
+    }
+
+    console.render(buffer);
+  }
 
   while (1) {
     switch (ch = console.get_char()) {
