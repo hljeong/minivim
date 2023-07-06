@@ -12,6 +12,30 @@ int Minivim::run() {
       }
       break;
 
+      case KEY_UP: {
+        CursorUp cursor_up;
+        cursor_up.execute(buffer, console);
+      }
+      break;
+
+      case KEY_DOWN: {
+        CursorDown cursor_down;
+        cursor_down.execute(buffer, console);
+      }
+      break;
+
+      case KEY_LEFT: {
+        CursorLeft cursor_left;
+        cursor_left.execute(buffer, console);
+      }
+      break;
+
+      case KEY_RIGHT: {
+        CursorRight cursor_right;
+        cursor_right.execute(buffer, console);
+      }
+      break;
+
       case KEY_BACKSPACE: {
         Backspace backspace;
         backspace.execute(buffer, console);

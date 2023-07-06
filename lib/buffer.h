@@ -64,6 +64,14 @@ public:
   int linefeed();
 
   int insert_char(int ch);
+
+  int cursor_up();
+
+  int cursor_down();
+
+  int cursor_left();
+
+  int cursor_right();
 };
 
 #endif

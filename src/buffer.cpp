@@ -101,3 +101,70 @@ int Buffer::insert_char(int ch) {
 
   return 0;
 }
+
+int Buffer::cursor_up() {
+  if (cursor.line == 0) {
+    if (cursor.piece == 0) {
+      return 0;
+    } else {
+      --cursor.piece;
+
+      cursor.line = pieces[cursor.piece].num_lines() - 1;
+    }
+  } else {
+    --cursor.line;
+  }
+
+  const Piece& cur_piece = pieces[cursor.piece];
+  std::vector<std::string>& cur_source = sources[cur_piece.get_source()];
+  const std::string& cur_line = cur_source[cursor.line];
+  if (cursor.pos > (int) cur_line.length()) {
+    cursor.pos = cur_line.length();
+  }
+  
+  return CURSOR_MOVED | (cursor.pos & CURSOR_POS_MASK);
+}
+
+int Buffer::cursor_down() {
+  if (cursor.line == pieces[cursor.piece].num_lines() - 1) {
+    if (cursor.piece == (int) pieces.size() - 1) {
+      return 0;
+    } else {
+      ++cursor.piece;
+
+      cursor.line = 0;
+    }
+  } else {
+    ++cursor.line;
+  }
+
+  const Piece& cur_piece = pieces[cursor.piece];
+  std::vector<std::string>& cur_source = sources[cur_piece.get_source()];
+  const std::string& cur_line = cur_source[cursor.line];
+  if (cursor.pos > (int) cur_line.length()) {
+    cursor.pos = cur_line.length();
+  }
+  
+  return CURSOR_MOVED | (cursor.pos & CURSOR_POS_MASK);
+}
+
+int Buffer::cursor_left() {
+  if (cursor.pos > 0) {
+    --cursor.pos;
+    return CURSOR_MOVED;
+  }
+  
+  return 0;
+}
+
+int Buffer::cursor_right() {
+  const Piece& cur_piece = pieces[cursor.piece];
+  std::vector<std::string>& cur_source = sources[cur_piece.get_source()];
+  const std::string& cur_line = cur_source[cursor.line];
+  if (cursor.pos < (int) cur_line.length()) {
+    ++cursor.pos;
+    return CURSOR_MOVED;
+  }
+  
+  return 0;
+}

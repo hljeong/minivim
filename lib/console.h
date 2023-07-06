@@ -28,6 +28,14 @@ public:
   int linefeed();
 
   int insert_char();
+
+  int cursor_up(int signal);
+
+  int cursor_down(int signal);
+
+  int cursor_left(int signal);
+
+  int cursor_right(int signal);
 };
 
 #endif

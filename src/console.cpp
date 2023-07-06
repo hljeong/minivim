@@ -67,6 +67,58 @@ int Console::insert_char() {
   return 0;
 }
 
+int Console::cursor_up(int signal) {
+  if (!(signal & CURSOR_MOVED)) {
+    return 0;
+  }
+
+  --viewport_line;
+
+  viewport_pos = signal & CURSOR_POS_MASK;
+
+  validate_viewport();
+
+  return 0;
+}
+
+int Console::cursor_down(int signal) {
+  if (!(signal & CURSOR_MOVED)) {
+    return 0;
+  }
+
+  ++viewport_line;
+
+  viewport_pos = signal & CURSOR_POS_MASK;
+
+  validate_viewport();
+
+  return 0;
+}
+
+int Console::cursor_left(int signal) {
+  if (!(signal & CURSOR_MOVED)) {
+    return 0;
+  }
+
+  --viewport_pos;
+
+  validate_viewport();
+
+  return 0;
+}
+
+int Console::cursor_right(int signal) {
+  if (!(signal & CURSOR_MOVED)) {
+    return 0;
+  }
+
+  ++viewport_pos;
+
+  validate_viewport();
+
+  return 0;
+}
+
 int Console::render(const Buffer &buffer) {
   clear();
 
