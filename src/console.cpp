@@ -154,7 +154,7 @@ int Console::render(const Buffer &buffer) {
     }
 
     const std::vector<std::string> lines = buffer.get_lines(cur_piece);
-    for (const std::string& line : lines) {
+    for (std::string line : lines) {
       // skip lines above viewport
       if (cur_rel_line < 0) {
         ++cur_rel_line;
@@ -173,12 +173,21 @@ int Console::render(const Buffer &buffer) {
         continue;
       }
 
+      // replace tabs with spaces
+      std::string tab(TAB_SIZE, ' ');
+      size_t pos = 0;
+      while((pos = line.find("\t", pos)) != std::string::npos) {
+        line.replace(pos, 1, tab);
+        pos += TAB_SIZE;
+      }
+
       // compute segment length
       int line_len = width;
       if ((int) line.length() - line_start < line_len) {
         line_len = (int) line.length() - line_start;
       }
       
+      // render line
       mvaddstr(cur_rel_line, 0, line.substr(line_start, line_len).c_str());
 
       ++cur_rel_line;

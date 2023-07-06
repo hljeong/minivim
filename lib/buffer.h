@@ -5,8 +5,6 @@
 #include <vector>
 #include "piece.h"
 
-#define TAB_SIZE 2
-
 struct Cursor {
   int piece;
   int line;

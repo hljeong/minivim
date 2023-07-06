@@ -4,6 +4,8 @@
 #include <ncurses.h>
 #include "buffer.h"
 
+#define TAB_SIZE 2
+
 class Console {
   int height;
   int width;

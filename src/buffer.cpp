@@ -11,13 +11,7 @@ Buffer::Buffer(std::string filename) :
   std::ifstream file(filename);
   if (file.is_open()) {
     std::string line;
-    std::string tab(TAB_SIZE, ' ');
     while (getline(file, line)) {
-      size_t pos = 0;
-      while((pos = line.find("\t", pos)) != std::string::npos) {
-        line.replace(pos, 1, tab);
-        pos += TAB_SIZE;
-      }
       lines.push_back(line);
     }
     file.close();
