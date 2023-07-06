@@ -1,3 +1,5 @@
+#include <bits/stdc++.h>
+
 #include "buffer.h"
 #include "commands.h"
 #include <fstream>
@@ -123,6 +125,9 @@ int Buffer::insert_char(int ch) {
 }
 
 int Buffer::cursor_up() {
+  // todo: magic number bad
+  int rpos = get_rendered_cursor_pos(2);
+
   if (cursor.line == 0) {
     if (cursor.piece == 0) {
       return 0;
@@ -138,14 +143,19 @@ int Buffer::cursor_up() {
   const Piece& cur_piece = pieces[cursor.piece];
   std::vector<std::string>& cur_source = sources[cur_piece.get_source()];
   const std::string& cur_line = cur_source[cursor.line];
-  if (cursor.pos > (int) cur_line.length()) {
-    cursor.pos = cur_line.length();
+  cursor.pos = 0;
+  // todo: inefficient
+  while (cursor.pos < (int) cur_line.length() && get_rendered_cursor_pos(2) < rpos) {
+    ++cursor.pos;
   }
   
   return CURSOR_MOVED | (cursor.pos & CURSOR_POS_MASK);
 }
 
 int Buffer::cursor_down() {
+  // todo: magic number bad
+  int rpos = get_rendered_cursor_pos(2);
+
   if (cursor.line == pieces[cursor.piece].num_lines() - 1) {
     if (cursor.piece == (int) pieces.size() - 1) {
       return 0;
@@ -161,8 +171,10 @@ int Buffer::cursor_down() {
   const Piece& cur_piece = pieces[cursor.piece];
   std::vector<std::string>& cur_source = sources[cur_piece.get_source()];
   const std::string& cur_line = cur_source[cursor.line];
-  if (cursor.pos > (int) cur_line.length()) {
-    cursor.pos = cur_line.length();
+  cursor.pos = 0;
+  // todo: inefficient
+  while (cursor.pos < (int) cur_line.length() && get_rendered_cursor_pos(2) < rpos) {
+    ++cursor.pos;
   }
   
   return CURSOR_MOVED | (cursor.pos & CURSOR_POS_MASK);
