@@ -21,23 +21,9 @@ public:
     return getch();
   }
 
-  int validate_viewport();
+  int move_viewport_to_cursor(const Buffer& buffer);
 
-  int render(const Buffer &buffer);
-
-  int backspace(int signal);
-
-  int linefeed();
-
-  int insert_char();
-
-  int cursor_up(int signal);
-
-  int cursor_down(int signal);
-
-  int cursor_left(int signal);
-
-  int cursor_right(int signal);
+  int render(const Buffer& buffer);
 };
 
 #endif

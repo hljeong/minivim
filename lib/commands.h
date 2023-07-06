@@ -14,8 +14,8 @@ public:
   Backspace() {}
 
   int execute(Buffer& buffer, Console& console) {
-    int signal = buffer.backspace();
-    console.backspace(signal);
+    buffer.backspace();
+    console.move_viewport_to_cursor(buffer);
 
     return 0;
   }
@@ -29,7 +29,7 @@ public:
 
   int execute(Buffer& buffer, Console& console) {
     buffer.insert_char(ch);
-    console.insert_char();
+    console.move_viewport_to_cursor(buffer);
 
     return 0;
   }
@@ -41,7 +41,7 @@ public:
 
   int execute(Buffer& buffer, Console& console) {
     buffer.linefeed();
-    console.linefeed();
+    console.move_viewport_to_cursor(buffer);
 
     return 0;
   }
@@ -52,8 +52,8 @@ public:
   CursorUp() {}
 
   int execute(Buffer& buffer, Console& console) {
-    int signal = buffer.cursor_up();
-    console.cursor_up(signal);
+    buffer.cursor_up();
+    console.move_viewport_to_cursor(buffer);
 
     return 0;
   }
@@ -64,8 +64,8 @@ public:
   CursorDown() {}
 
   int execute(Buffer& buffer, Console& console) {
-    int signal = buffer.cursor_down();
-    console.cursor_down(signal);
+    buffer.cursor_down();
+    console.move_viewport_to_cursor(buffer);
 
     return 0;
   }
@@ -76,8 +76,8 @@ public:
   CursorLeft() {}
 
   int execute(Buffer& buffer, Console& console) {
-    int signal = buffer.cursor_left();
-    console.cursor_left(signal);
+    buffer.cursor_left();
+    console.move_viewport_to_cursor(buffer);
 
     return 0;
   }
@@ -88,8 +88,8 @@ public:
   CursorRight() {}
 
   int execute(Buffer& buffer, Console& console) {
-    int signal = buffer.cursor_right();
-    console.cursor_right(signal);
+    buffer.cursor_right();
+    console.move_viewport_to_cursor(buffer);
 
     return 0;
   }

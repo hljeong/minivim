@@ -16,105 +16,24 @@ Console::~Console() {
   endwin();
 }
 
-int Console::validate_viewport() {
+int Console::move_viewport_to_cursor(const Buffer& buffer) {
   getmaxyx(stdscr, height, width);
 
-  if (viewport_line < 0) {
-    viewport_line = 0;
-  } else if (viewport_line >= height) {
-    viewport_line = height - 1;
+  // get cursor info
+  int cursor_line = buffer.get_absolute_cursor_line();
+  int cursor_pos = buffer.get_rendered_cursor_pos(TAB_SIZE);
+
+  if (cursor_line < viewport_line) {
+    viewport_line = cursor_line;
+  } else if (cursor_line >= viewport_line + height) {
+    viewport_line = cursor_line - (height - 1);
   }
 
-  if (viewport_pos < 0) {
-    viewport_pos = 0;
-  } else if (viewport_pos >= width) {
-    viewport_pos = width - 1;
+  if (cursor_pos < viewport_pos) {
+    viewport_pos = cursor_pos;
+  } else if (cursor_pos >= viewport_pos + width) {
+    viewport_pos = cursor_pos - (width - 1);
   }
-
-  return 0;
-}
-
-int Console::backspace(int signal) {
-  if (signal & BACKSPACE_CROSS_LINE) {
-    --viewport_line;
-
-    int delta_pos = signal & BACKSPACE_CROSS_LINE_DELTA_MASK;
-    viewport_pos += delta_pos;
-  } else if (!(signal & BACKSPACE_DO_NOTHING)) {
-    --viewport_pos;
-  }
-
-  validate_viewport();
-
-  return 0;
-}
-
-int Console::linefeed() {
-  ++viewport_line;
-
-  viewport_pos = 0;
-
-  validate_viewport();
-
-  return 0;
-}
-
-int Console::insert_char() {
-  ++viewport_pos;
-
-  validate_viewport();
-
-  return 0;
-}
-
-int Console::cursor_up(int signal) {
-  if (!(signal & CURSOR_MOVED)) {
-    return 0;
-  }
-
-  --viewport_line;
-
-  viewport_pos = signal & CURSOR_POS_MASK;
-
-  validate_viewport();
-
-  return 0;
-}
-
-int Console::cursor_down(int signal) {
-  if (!(signal & CURSOR_MOVED)) {
-    return 0;
-  }
-
-  ++viewport_line;
-
-  viewport_pos = signal & CURSOR_POS_MASK;
-
-  validate_viewport();
-
-  return 0;
-}
-
-int Console::cursor_left(int signal) {
-  if (!(signal & CURSOR_MOVED)) {
-    return 0;
-  }
-
-  --viewport_pos;
-
-  validate_viewport();
-
-  return 0;
-}
-
-int Console::cursor_right(int signal) {
-  if (!(signal & CURSOR_MOVED)) {
-    return 0;
-  }
-
-  ++viewport_pos;
-
-  validate_viewport();
 
   return 0;
 }
@@ -123,31 +42,19 @@ int Console::render(const Buffer &buffer) {
   clear();
 
   // get cursor info
-  int cursor_piece = buffer.get_cursor_piece();
-  int cursor_line = buffer.get_cursor_line();
-  int cursor_pos = buffer.get_cursor_pos();
+  int absolute_cursor_line = buffer.get_absolute_cursor_line();
+  int rendered_cursor_pos = buffer.get_rendered_cursor_pos(TAB_SIZE);
 
-  // find segment of line to render
-  int line_start = cursor_pos - viewport_pos;
-
-
-  // find piece that reaches top of viewport
-  int cur_piece = cursor_piece;
-  int cur_line = cursor_line;
-  while (cur_line < viewport_line) {
-    // if at top of viewport then set viewport
-    if (cur_piece == 0) {
-      viewport_line = cur_line;
-      break;
-    }
-
-    --cur_piece;
+  // find first piece visible in viewport
+  int cur_piece = 0;
+  int cur_line = 0;
+  while (cur_line + buffer.get_piece(cur_piece).num_lines() < viewport_line) {
+    ++cur_piece;
     cur_line += buffer.get_piece(cur_piece).num_lines();
   }
 
   // render text
-  int cur_rel_line = viewport_line - cur_line;
-  while (cur_rel_line < height) {
+  while (cur_line < viewport_line + height) {
     // stop at end of buffer
     if (cur_piece >= buffer.num_pieces()) {
       break;
@@ -156,20 +63,20 @@ int Console::render(const Buffer &buffer) {
     const std::vector<std::string> lines = buffer.get_lines(cur_piece);
     for (std::string line : lines) {
       // skip lines above viewport
-      if (cur_rel_line < 0) {
-        ++cur_rel_line;
+      if (cur_line < viewport_line) {
+        ++cur_line;
         continue;
       }
 
       // stop at end of viewport
-      if (cur_rel_line >= height) {
-        ++cur_rel_line;
+      if (cur_line >= viewport_line + height) {
+        ++cur_line;
         break;
       }
 
       // skip if out of view
-      if (line_start >= (int) line.length()) {
-        ++cur_rel_line;
+      if (viewport_pos >= (int) line.length()) {
+        ++cur_line;
         continue;
       }
 
@@ -177,26 +84,28 @@ int Console::render(const Buffer &buffer) {
       std::string tab(TAB_SIZE, ' ');
       size_t pos = 0;
       while((pos = line.find("\t", pos)) != std::string::npos) {
+        int tab_size = TAB_SIZE - (int) pos % TAB_SIZE;
+        std::string tab(tab_size, ' ');
         line.replace(pos, 1, tab);
         pos += TAB_SIZE;
       }
 
       // compute segment length
       int line_len = width;
-      if ((int) line.length() - line_start < line_len) {
-        line_len = (int) line.length() - line_start;
+      if ((int) line.length() - viewport_pos < line_len) {
+        line_len = (int) line.length() - viewport_pos;
       }
       
       // render line
-      mvaddstr(cur_rel_line, 0, line.substr(line_start, line_len).c_str());
+      mvaddstr(cur_line - viewport_line, 0, line.substr(viewport_pos, line_len).c_str());
 
-      ++cur_rel_line;
+      ++cur_line;
     }
 
     ++cur_piece;
   }
 
-  move(viewport_line, viewport_pos);
+  move(absolute_cursor_line - viewport_line, rendered_cursor_pos - viewport_pos);
 
   refresh();
 

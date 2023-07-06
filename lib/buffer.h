@@ -32,16 +32,26 @@ public:
 
   ~Buffer() {}
 
-  int get_cursor_piece() const {
-    return cursor.piece;
+  int get_absolute_cursor_line() const {
+    int line = 0;
+    for (int i = 0; i < cursor.piece; ++i) {
+      line += pieces[i].num_lines();
+    }
+    line += cursor.line;
+    return line;
   }
 
-  int get_cursor_line() const {
-    return cursor.line;
-  }
-
-  int get_cursor_pos() const {
-    return cursor.pos;
+  int get_rendered_cursor_pos(int tab_size) const {
+    int pos = 0;
+    const std::string& cur_line = sources[pieces[cursor.piece].get_source()][cursor.line];
+    for (int i = 0; i < cursor.pos; ++i) {
+      if (cur_line[i] == '\t') {
+        pos += tab_size - pos % tab_size;
+      } else {
+        ++pos;
+      }
+    }
+    return pos;
   }
 
   const Piece& get_piece(int index) const {
