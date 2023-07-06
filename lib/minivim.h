@@ -11,6 +11,8 @@ class Minivim {
 public: 
   Minivim() : buffer(), console() {}
 
+  Minivim(std::string filename) : buffer(filename), console() {}
+
   ~Minivim() {}
 
   int run();

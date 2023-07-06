@@ -1,6 +1,32 @@
 #include "buffer.h"
 #include "commands.h"
+#include <fstream>
 #include <ncurses.h>
+
+Buffer::Buffer(std::string filename) : 
+  sources(), 
+  pieces(), 
+  cursor(0, 0, 0) {
+  std::vector<std::string> lines;
+  std::ifstream file(filename);
+  if (file.is_open()) {
+    std::string line;
+    std::string tab(TAB_SIZE, ' ');
+    while (getline(file, line)) {
+      size_t pos = 0;
+      while((pos = line.find("\t", pos)) != std::string::npos) {
+        line.replace(pos, 1, tab);
+        pos += TAB_SIZE;
+      }
+      lines.push_back(line);
+    }
+    file.close();
+  } else {
+    lines.push_back("");
+  }
+  sources.push_back(lines);
+  pieces.push_back(Piece(0, 0, lines.size()));
+}
 
 int Buffer::backspace() {
   const Piece& cur_piece = pieces[cursor.piece];

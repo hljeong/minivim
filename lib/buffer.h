@@ -5,6 +5,8 @@
 #include <vector>
 #include "piece.h"
 
+#define TAB_SIZE 2
+
 struct Cursor {
   int piece;
   int line;
@@ -27,6 +29,8 @@ public:
     sources.push_back(std::vector<std::string>(1, ""));
     pieces.push_back(Piece(0, 0, 1));
   }
+
+  Buffer(std::string filename);
 
   ~Buffer() {}
 

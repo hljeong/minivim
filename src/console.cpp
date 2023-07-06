@@ -179,7 +179,7 @@ int Console::render(const Buffer &buffer) {
         line_len = (int) line.length() - line_start;
       }
       
-      mvprintw(cur_rel_line, 0, line.substr(line_start, line_len).c_str());
+      mvaddstr(cur_rel_line, 0, line.substr(line_start, line_len).c_str());
 
       ++cur_rel_line;
     }

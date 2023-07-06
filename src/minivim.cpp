@@ -4,6 +4,7 @@
 
 int Minivim::run() {
   int ch;
+  console.render(buffer);
 
   while (1) {
     switch (ch = console.get_char()) {
