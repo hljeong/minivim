@@ -3,6 +3,27 @@
 
 #include "command.h"
 
+class Compound : public Command {
+  std::vector<Command*> commands;
+
+public: 
+  Compound(std::initializer_list<Command*> commands) : commands(commands) {}
+
+  ~Compound() {
+    for (Command* command : commands) {
+      delete command;
+    }
+  }
+
+  int execute(Buffer& buffer, Console& console) {
+    for (Command* command : commands) {
+      command->execute(buffer, console);
+    }
+
+    return 0;
+  }
+};
+
 class Backspace : public Command {
 public: 
   Backspace() {}
@@ -90,11 +111,25 @@ public:
 };
 
 class CursorRight : public Command {
+  int block;
+
 public: 
-  CursorRight() {}
+  CursorRight(int block) : block(block) {}
 
   int execute(Buffer& buffer, Console& console) {
-    buffer.cursor_right();
+    buffer.cursor_right(block);
+    console.move_viewport_to_cursor(buffer);
+
+    return 0;
+  }
+};
+
+class CursorNormalize : public Command {
+public: 
+  CursorNormalize() {}
+
+  int execute(Buffer& buffer, Console& console) {
+    buffer.cursor_normalize();
     console.move_viewport_to_cursor(buffer);
 
     return 0;

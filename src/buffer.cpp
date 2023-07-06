@@ -202,13 +202,26 @@ int Buffer::cursor_left() {
   return 0;
 }
 
-int Buffer::cursor_right() {
+int Buffer::cursor_right(int block) {
   const Piece& cur_piece = pieces[cursor.piece];
   std::vector<std::string>& cur_source = sources[cur_piece.get_source()];
   const std::string& cur_line = cur_source[cursor.line];
-  if (cursor.pos < (int) cur_line.length()) {
+  
+  if (cursor.pos < (int) cur_line.length() - block) {
     ++cursor.pos;
     return 0;
+  }
+  
+  return 0;
+}
+
+int Buffer::cursor_normalize() {
+  const Piece& cur_piece = pieces[cursor.piece];
+  std::vector<std::string>& cur_source = sources[cur_piece.get_source()];
+  const std::string& cur_line = cur_source[cursor.line];
+
+  if (cursor.pos >= (int) cur_line.length()) {
+    cursor.pos = cur_line.length() - 1;
   }
   
   return 0;

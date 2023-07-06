@@ -85,7 +85,9 @@ public:
 
   int cursor_left();
 
-  int cursor_right();
+  int cursor_right(int block);
+
+  int cursor_normalize();
 };
 
 #endif
