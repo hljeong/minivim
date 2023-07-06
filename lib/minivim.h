@@ -15,6 +15,7 @@ class Minivim {
   int mode;
   Buffer buffer;
   Console console;
+  std::vector<std::string> mode_strings;
   std::vector<std::map<int, Command*>> commands;
   std::vector<std::map<int, int>> mode_transitions;
 
@@ -22,14 +23,16 @@ public:
   Minivim() : 
     mode(NORMAL_MODE), 
     buffer(), 
-    console(), 
+    console(buffer), 
+    mode_strings(NUM_MODES), 
     commands(NUM_MODES), 
     mode_transitions(NUM_MODES) {}
 
   Minivim(std::string filename) : 
     mode(NORMAL_MODE), 
     buffer(filename), 
-    console(), 
+    console(buffer), 
+    mode_strings(NUM_MODES), 
     commands(NUM_MODES),
     mode_transitions(NUM_MODES) {}
 
@@ -43,6 +46,8 @@ public:
   }
 
   int init();
+
+  int render();
 
   int run();
 };

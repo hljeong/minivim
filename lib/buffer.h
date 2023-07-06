@@ -62,6 +62,14 @@ public:
     return pieces.size();
   }
 
+  const int get_num_lines() const {
+    int lines = 0;
+    for (Piece piece : pieces) {
+      lines += piece.num_lines();
+    }
+    return lines;
+  }
+
   const std::vector<std::string> get_lines(int index) const {
     Piece piece = pieces[index];
     std::vector<std::string> source = sources[piece.get_source()];

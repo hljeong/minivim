@@ -3,6 +3,8 @@
 #include "minivim.h"
 
 int Minivim::init() {
+  mode_strings[INSERT_MODE] = "[insert]";
+
   commands[INSERT_MODE][KEY_UP] = new CursorUp();
   commands[INSERT_MODE][KEY_DOWN] = new CursorDown();
   commands[INSERT_MODE][KEY_LEFT] = new CursorLeft();
@@ -23,6 +25,8 @@ int Minivim::init() {
     commands[INSERT_MODE][printable] = new InsertChar(printable);
   }
 
+  mode_strings[NORMAL_MODE] = "[normal]";
+
   commands[NORMAL_MODE]['k'] = new CursorUp();
   commands[NORMAL_MODE]['j'] = new CursorDown();
   commands[NORMAL_MODE]['h'] = new CursorLeft();
@@ -36,9 +40,18 @@ int Minivim::init() {
   return 0;
 }
 
+int Minivim::render() {
+  console.clear_screen();
+  console.render_status(mode_strings[mode]);
+  console.render_buffer(buffer);
+  console.render_to_screen();
+
+  return 0;
+}
+
 int Minivim::run() {
   int ch;
-  console.render(buffer);
+  render();
 
   while (1) {
     ch = console.get_char();
@@ -55,7 +68,7 @@ int Minivim::run() {
       mode = mode_transitions[mode][ch];
     }
 
-    console.render(buffer);
+    render();
   }
 
   return 0;

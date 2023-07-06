@@ -2,14 +2,14 @@
 #include "commands.h"
 #include "console.h"
 
-Console::Console() : 
+Console::Console(const Buffer& buffer) : 
   viewport_line(0), 
   viewport_pos(0) {
   initscr();
   cbreak();
   noecho();
   keypad(stdscr, TRUE);
-  getmaxyx(stdscr, height, width);
+  move_viewport_to_cursor(buffer);
 }
 
 Console::~Console() {
@@ -17,7 +17,11 @@ Console::~Console() {
 }
 
 int Console::move_viewport_to_cursor(const Buffer& buffer) {
-  getmaxyx(stdscr, height, width);
+  getmaxyx(stdscr, window_height, window_width);
+
+  viewport_height = window_height - 1;
+  line_num_width = std::to_string(buffer.get_num_lines()).length();
+  viewport_width = window_width - line_num_width - 1;
 
   // get cursor info
   int cursor_line = buffer.get_absolute_cursor_line();
@@ -25,22 +29,30 @@ int Console::move_viewport_to_cursor(const Buffer& buffer) {
 
   if (cursor_line < viewport_line) {
     viewport_line = cursor_line;
-  } else if (cursor_line >= viewport_line + height) {
-    viewport_line = cursor_line - (height - 1);
+  } else if (cursor_line >= viewport_line + viewport_height) {
+    viewport_line = cursor_line - (viewport_height - 1);
   }
 
   if (cursor_pos < viewport_pos) {
     viewport_pos = cursor_pos;
-  } else if (cursor_pos >= viewport_pos + width) {
-    viewport_pos = cursor_pos - (width - 1);
+  } else if (cursor_pos >= viewport_pos + viewport_width) {
+    viewport_pos = cursor_pos - (viewport_width - 1);
   }
 
   return 0;
 }
 
-int Console::render(const Buffer &buffer) {
-  clear();
+#include <bits/stdc++.h>
 
+int Console::render_status(const std::string& mode) {
+  mvaddstr(viewport_height, 0, mode.c_str());
+
+  std::cerr << mode << std::endl;
+
+  return 0;
+}
+
+int Console::render_buffer(const Buffer &buffer) {
   // get cursor info
   int absolute_cursor_line = buffer.get_absolute_cursor_line();
   int rendered_cursor_pos = buffer.get_rendered_cursor_pos(TAB_SIZE);
@@ -54,7 +66,7 @@ int Console::render(const Buffer &buffer) {
   }
 
   // render text
-  while (cur_line < viewport_line + height) {
+  while (cur_line < viewport_line + viewport_height) {
     // stop at end of buffer
     if (cur_piece >= buffer.num_pieces()) {
       break;
@@ -69,10 +81,14 @@ int Console::render(const Buffer &buffer) {
       }
 
       // stop at end of viewport
-      if (cur_line >= viewport_line + height) {
-        ++cur_line;
+      if (cur_line >= viewport_line + viewport_height) {
         break;
       }
+
+      // render line number
+      std::string line_num = std::to_string(cur_line + 1);
+      line_num.insert(0, line_num_width - line_num.length(), ' ');
+      mvaddstr(cur_line - viewport_line, 0, line_num.c_str());
 
       // skip if out of view
       if (viewport_pos >= (int) line.length()) {
@@ -91,13 +107,13 @@ int Console::render(const Buffer &buffer) {
       }
 
       // compute segment length
-      int line_len = width;
+      int line_len = viewport_width;
       if ((int) line.length() - viewport_pos < line_len) {
         line_len = (int) line.length() - viewport_pos;
       }
       
       // render line
-      mvaddstr(cur_line - viewport_line, 0, line.substr(viewport_pos, line_len).c_str());
+      mvaddstr(cur_line - viewport_line, line_num_width + 1, line.substr(viewport_pos, line_len).c_str());
 
       ++cur_line;
     }
@@ -105,9 +121,7 @@ int Console::render(const Buffer &buffer) {
     ++cur_piece;
   }
 
-  move(absolute_cursor_line - viewport_line, rendered_cursor_pos - viewport_pos);
-
-  refresh();
+  move(absolute_cursor_line - viewport_line, line_num_width + 1 + rendered_cursor_pos - viewport_pos);
 
   return 0;
 }
