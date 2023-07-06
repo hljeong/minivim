@@ -37,7 +37,7 @@ int Buffer::backspace() {
 
       // at start of buffer
       if (cursor.piece == 0) {
-        return BACKSPACE_DO_NOTHING;
+        return 0;
 
       // cross-piece backspace
       } else {
@@ -45,7 +45,6 @@ int Buffer::backspace() {
         const std::string prev_line = sources[prev_piece.get_source()].back();
 
         int npos = prev_line.length();
-        int delta = npos - cursor.pos;
         cur_source[0] = prev_line + cur_source[0];
 
         pieces[cursor.piece - 1] = Piece(
@@ -55,13 +54,12 @@ int Buffer::backspace() {
         );
         cursor.pos = npos;
 
-        return BACKSPACE_CROSS_LINE | (delta & BACKSPACE_CROSS_LINE_DELTA_MASK);
+        return 0;
       }
 
     // delete newline within piece
     } else {
       int npos = cur_source[cursor.line - 1].length();
-      int delta = npos - cursor.pos;
       cur_source[cursor.line - 1] += cur_line;
       cur_source.erase(cur_source.begin() + cursor.line);
 
@@ -73,7 +71,7 @@ int Buffer::backspace() {
       --cursor.line;
       cursor.pos = npos;
 
-      return BACKSPACE_CROSS_LINE | (delta & BACKSPACE_CROSS_LINE_DELTA_MASK);
+      return 0;
     }
 
   // delete a char within line
@@ -85,6 +83,20 @@ int Buffer::backspace() {
 
     --cursor.pos;
   }
+
+  return 0;
+}
+
+int Buffer::insert_char(int ch) {
+  const Piece& cur_piece = pieces[cursor.piece];
+  std::vector<std::string>& cur_source = sources[cur_piece.get_source()];
+  const std::string& cur_line = cur_source[cursor.line];
+  const std::string prefix = cur_line.substr(0, cursor.pos);
+  const std::string suffix = cur_line.substr(cursor.pos);
+  
+  cur_source[cursor.line] = prefix + (char) ch + suffix;
+
+  ++cursor.pos;
 
   return 0;
 }
@@ -110,16 +122,19 @@ int Buffer::linefeed() {
   return 0;
 }
 
-int Buffer::insert_char(int ch) {
+int Buffer::tab() {
   const Piece& cur_piece = pieces[cursor.piece];
   std::vector<std::string>& cur_source = sources[cur_piece.get_source()];
   const std::string& cur_line = cur_source[cursor.line];
   const std::string prefix = cur_line.substr(0, cursor.pos);
   const std::string suffix = cur_line.substr(cursor.pos);
   
-  cur_source[cursor.line] = prefix + (char) ch + suffix;
+  // todo: magic number bad
+  int tab_size = 2 - get_rendered_cursor_pos(2) % 2;
+  std::string tab(tab_size, ' ');
+  cur_source[cursor.line] = prefix + tab + suffix;
 
-  ++cursor.pos;
+  cursor.pos += tab_size;
 
   return 0;
 }
@@ -149,7 +164,7 @@ int Buffer::cursor_up() {
     ++cursor.pos;
   }
   
-  return CURSOR_MOVED | (cursor.pos & CURSOR_POS_MASK);
+  return 0;
 }
 
 int Buffer::cursor_down() {
@@ -177,13 +192,13 @@ int Buffer::cursor_down() {
     ++cursor.pos;
   }
   
-  return CURSOR_MOVED | (cursor.pos & CURSOR_POS_MASK);
+  return 0;
 }
 
 int Buffer::cursor_left() {
   if (cursor.pos > 0) {
     --cursor.pos;
-    return CURSOR_MOVED;
+    return 0;
   }
   
   return 0;
@@ -195,7 +210,7 @@ int Buffer::cursor_right() {
   const std::string& cur_line = cur_source[cursor.line];
   if (cursor.pos < (int) cur_line.length()) {
     ++cursor.pos;
-    return CURSOR_MOVED;
+    return 0;
   }
   
   return 0;

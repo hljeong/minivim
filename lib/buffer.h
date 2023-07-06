@@ -73,9 +73,11 @@ public:
 
   int backspace();
 
+  int insert_char(int ch);
+
   int linefeed();
 
-  int insert_char(int ch);
+  int tab();
 
   int cursor_up();
 

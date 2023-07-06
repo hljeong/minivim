@@ -3,12 +3,6 @@
 
 #include "command.h"
 
-#define BACKSPACE_CROSS_LINE (1 << 30)
-#define BACKSPACE_DO_NOTHING (1 << 29)
-#define BACKSPACE_CROSS_LINE_DELTA_MASK ((1 << 29) - 1)
-#define CURSOR_MOVED (1 << 30)
-#define CURSOR_POS_MASK ((1 << 30) - 1)
-
 class Backspace : public Command {
 public: 
   Backspace() {}
@@ -41,6 +35,18 @@ public:
 
   int execute(Buffer& buffer, Console& console) {
     buffer.linefeed();
+    console.move_viewport_to_cursor(buffer);
+
+    return 0;
+  }
+};
+
+class Tab : public Command {
+public: 
+  Tab() {}
+
+  int execute(Buffer& buffer, Console& console) {
+    buffer.tab();
     console.move_viewport_to_cursor(buffer);
 
     return 0;

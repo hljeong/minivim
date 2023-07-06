@@ -49,7 +49,14 @@ int Minivim::run() {
       }
       break;
 
-      default: {
+      case '\t': {
+        Tab tab;
+        tab.execute(buffer, console);
+      }
+      break;
+
+      // printable characters
+      case 32 ... 126: {
         InsertChar insert_char(ch);
         insert_char.execute(buffer, console);
       }
