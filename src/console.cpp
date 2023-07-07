@@ -42,12 +42,8 @@ int Console::move_viewport_to_cursor(const Buffer& buffer) {
   return 0;
 }
 
-#include <bits/stdc++.h>
-
 int Console::render_status(const std::string& mode) {
   mvaddstr(viewport_height, 0, mode.c_str());
-
-  std::cerr << mode << std::endl;
 
   return 0;
 }
