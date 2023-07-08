@@ -1,45 +1,34 @@
 #ifndef CONSOLE_H
 #define CONSOLE_H
 
-#include <ncurses.h>
-#include <string>
 #include "buffer.h"
-
-#define TAB_SIZE 2
-
-#include <bits/stdc++.h>
+#include "config.h"
+#include "cursor.h"
+#include "viewport.h"
 
 class Console {
-  int window_height;
-  int window_width;
-  int viewport_line;
-  int viewport_pos;
-  int viewport_height;
-  int viewport_width;
-  int line_num_width;
-
 public: 
-  Console(const Buffer& buffer);
+  Console();
 
   ~Console();
 
-  int get_char() {
-    return getch();
-  }
+  int get_height() const;
 
-  int move_viewport_to_cursor(const Buffer& buffer);
+  int get_width() const;
 
-  int clear_screen() {
-    return clear();
-  }
+  int get_char() const;
 
-  int render_status(const std::string& mode);
+  int clear_screen() const;
 
-  int render_buffer(const Buffer& buffer);
+  int render(const Buffer& buffer, const Config& config, const Viewport& viewport) const;
 
-  int render_to_screen() {
-    return refresh();
-  }
+  int render(const CommandBuffer& command_buffer) const;
+
+  int render_cursor(const Buffer& buffer, const Config& config, const Cursor& cursor, const Viewport& viewport) const;
+
+  int render_cursor(const CommandBuffer& command_buffer) const;
+
+  int render_to_screen() const;
 };
 
 #endif

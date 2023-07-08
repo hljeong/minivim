@@ -3,27 +3,35 @@
 
 #include <string>
 #include <vector>
-#include "piece.h"
 
-struct Cursor {
-  int piece;
-  int line;
-  int pos;
-  
-  Cursor(int piece, int line, int pos) : 
-    piece(piece), line(line), pos(pos) {}
+class Command;
+
+struct Piece {
+  int source;
+  int start;
+  int lines;
+
+  Piece(int source, 
+    int start, 
+    int lines) : 
+    source(source), 
+    start(start), 
+    lines(lines) {}
+
+  Piece(const Piece& piece) : 
+    source(piece.source), 
+    start(piece.start), 
+    lines(piece.lines) {}
 };
 
 class Buffer {
   std::vector<std::vector<std::string>> sources;
   std::vector<Piece> pieces;
-  Cursor cursor;
 
 public: 
   Buffer() : 
     sources(), 
-    pieces(), 
-    cursor(0, 0, 0) {
+    pieces() {
     sources.push_back(std::vector<std::string>(1, ""));
     pieces.push_back(Piece(0, 0, 1));
   }
@@ -32,70 +40,36 @@ public:
 
   ~Buffer() {}
 
-  int get_absolute_cursor_line() const {
-    int line = 0;
-    for (int i = 0; i < cursor.piece; ++i) {
-      line += pieces[i].num_lines();
+  int get_line_num(int piece, int line) const {
+    int line_num = 0;
+    for (int i = 0; i < piece; ++i) {
+      line_num += pieces[i].lines;
     }
-    line += cursor.line;
-    return line;
+    return line_num + line;
   }
-
-  int get_rendered_cursor_pos(int tab_size) const {
-    int pos = 0;
-    const std::string& cur_line = sources[pieces[cursor.piece].get_source()][cursor.line];
-    for (int i = 0; i < cursor.pos; ++i) {
-      if (cur_line[i] == '\t') {
-        pos += tab_size - pos % tab_size;
+  
+  std::string get_line(int line_num) const {
+    for (const Piece& piece : pieces) {
+      if (line_num < piece.lines) {
+        return sources[piece.source][piece.start + line_num];
       } else {
-        ++pos;
+        line_num -= piece.lines;
       }
     }
-    return pos;
+    return "";
   }
 
-  const Piece& get_piece(int index) const {
-    return pieces[index];
-  }
+  Command* split(int piece, int line, bool remove_line);
 
-  int num_pieces() const {
-    return pieces.size();
-  }
+  Command* unsplit(int piece, int line, int n_pieces, Piece orig_piece);
 
-  const int get_num_lines() const {
-    int lines = 0;
-    for (Piece piece : pieces) {
-      lines += piece.num_lines();
-    }
-    return lines;
-  }
+  Command* insert(int index, std::vector<std::string> source);
 
-  const std::vector<std::string> get_lines(int index) const {
-    Piece piece = pieces[index];
-    std::vector<std::string> source = sources[piece.get_source()];
-    return std::vector<std::string>(
-      source.begin() + piece.get_start(), 
-      source.begin() + piece.get_start() + piece.num_lines()
-    );
-  }
+  Command* uninsert(int index);
+};
 
-  int backspace();
-
-  int insert_char(int ch);
-
-  int linefeed();
-
-  int tab();
-
-  int cursor_up();
-
-  int cursor_down();
-
-  int cursor_left();
-
-  int cursor_right(int block);
-
-  int cursor_normalize();
+class CommandBuffer {
+  
 };
 
 #endif

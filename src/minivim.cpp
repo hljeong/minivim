@@ -1,8 +1,9 @@
 #include <ncurses.h>
-#include "commands.h"
+#include "command.h"
 #include "minivim.h"
 
 int Minivim::init() {
+  /*
   mode_strings[INSERT_MODE] = "[insert]";
 
   commands[INSERT_MODE][KEY_UP] = new CursorUp();
@@ -36,40 +37,52 @@ int Minivim::init() {
 
   mode_transitions[NORMAL_MODE]['i'] = INSERT_MODE;
   mode_transitions[NORMAL_MODE]['a'] = INSERT_MODE;
+  */
+
+  viewport.height = console.get_height() - 1;
+  viewport.width = console.get_width();
 
   return 0;
 }
 
-int Minivim::render() {
+int Minivim::input(int ch) {
+  if (ch == KEY_F(4)) {
+    return 0;
+  }
+
+  int mode = 0;
+
+  if (commands[mode].find(ch) != commands[mode].end()) {
+    commands[mode][ch]->execute(
+      buffer, 
+      command_buffer, 
+      config, 
+      console, 
+      cursor, 
+      viewport
+    );
+  }
+
+  if (mode_transitions[mode].find(ch) != mode_transitions[mode].end()) {
+    mode = mode_transitions[mode][ch];
+  }
+
+  return 1;
+}
+
+int Minivim::render() const {
   console.clear_screen();
-  console.render_status(mode_strings[mode]);
-  console.render_buffer(buffer);
+  console.render(buffer, config, viewport);
+  console.render_cursor(buffer, config, cursor, viewport);
   console.render_to_screen();
 
   return 0;
 }
 
 int Minivim::run() {
-  int ch;
-  render();
-
-  while (1) {
-    ch = console.get_char();
-
-    if (ch == KEY_F(4)) {
-      return 0;
-    }
-
-    if (commands[mode].find(ch) != commands[mode].end()) {
-      commands[mode][ch]->execute(buffer, console);
-    }
-
-    if (mode_transitions[mode].find(ch) != mode_transitions[mode].end()) {
-      mode = mode_transitions[mode][ch];
-    }
-
+  do {
     render();
-  }
+  } while (input(console.get_char()));
 
   return 0;
 }

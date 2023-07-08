@@ -1,3 +1,4 @@
+#include <string>
 #include "minivim.h"
 
 int main(int argc, char **argv) {

@@ -1,12 +1,10 @@
 #include "buffer.h"
-#include "commands.h"
+#include "command.h"
 #include <fstream>
-#include <ncurses.h>
 
 Buffer::Buffer(std::string filename) : 
   sources(), 
-  pieces(), 
-  cursor(0, 0, 0) {
+  pieces() {
   std::vector<std::string> lines;
   std::ifstream file(filename);
   if (file.is_open()) {
@@ -22,207 +20,58 @@ Buffer::Buffer(std::string filename) :
   pieces.push_back(Piece(0, 0, lines.size()));
 }
 
-int Buffer::backspace() {
-  const Piece& cur_piece = pieces[cursor.piece];
-  std::vector<std::string>& cur_source = sources[cur_piece.get_source()];
-  const std::string& cur_line = cur_source[cursor.line];
-  
-  // at start of line
-  if (cursor.pos == 0) {
+Command* Buffer::split(int piece, int line, bool remove_line) {
+  const Piece& cur_piece = pieces[piece];
+  auto it = pieces.erase(pieces.begin() + piece);
+  int n_pieces = 0;
 
-    // at first line of piece
-    if (cursor.line == 0) {
-
-      // at start of buffer
-      if (cursor.piece == 0) {
-        return 0;
-
-      // cross-piece backspace
-      } else {
-        const Piece& prev_piece = pieces[cursor.piece - 1];
-        const std::string prev_line = sources[prev_piece.get_source()].back();
-
-        int npos = prev_line.length();
-        cur_source[0] = prev_line + cur_source[0];
-
-        pieces[cursor.piece - 1] = Piece(
-          prev_piece.get_source(), 
-          prev_piece.get_start(), 
-          prev_piece.num_lines() - 1
-        );
-        cursor.pos = npos;
-
-        return 0;
-      }
-
-    // delete newline within piece
-    } else {
-      int npos = cur_source[cursor.line - 1].length();
-      cur_source[cursor.line - 1] += cur_line;
-      cur_source.erase(cur_source.begin() + cursor.line);
-
-      pieces[cursor.piece] = Piece(
-        cur_piece.get_source(), 
-        cur_piece.get_start(), 
-        cur_piece.num_lines() - 1
-      );
-      --cursor.line;
-      cursor.pos = npos;
-
-      return 0;
-    }
-
-  // delete a char within line
-  } else {
-    const std::string prefix = cur_line.substr(0, cursor.pos - 1);
-    const std::string suffix = cur_line.substr(cursor.pos);
-
-    cur_source[cursor.line] = prefix + suffix;
-
-    --cursor.pos;
+  if (line) {
+    Piece piece(cur_piece.source, cur_piece.start, line);
+    pieces.insert(it, piece);
+    ++it;
+    ++n_pieces;
   }
 
-  return 0;
-}
-
-int Buffer::insert_char(int ch) {
-  const Piece& cur_piece = pieces[cursor.piece];
-  std::vector<std::string>& cur_source = sources[cur_piece.get_source()];
-  const std::string& cur_line = cur_source[cursor.line];
-  const std::string prefix = cur_line.substr(0, cursor.pos);
-  const std::string suffix = cur_line.substr(cursor.pos);
-  
-  cur_source[cursor.line] = prefix + (char) ch + suffix;
-
-  ++cursor.pos;
-
-  return 0;
-}
-
-int Buffer::linefeed() {
-  const Piece& cur_piece = pieces[cursor.piece];
-  std::vector<std::string>& cur_source = sources[cur_piece.get_source()];
-  const std::string& cur_line = cur_source[cursor.line];
-  const std::string prefix = cur_line.substr(0, cursor.pos);
-  const std::string suffix = cur_line.substr(cursor.pos);
-  
-  cur_source[cursor.line] = prefix;
-  cur_source.insert(cur_source.begin() + cursor.line + 1, suffix);
-
-  pieces[cursor.piece] = Piece(
-    cur_piece.get_source(), 
-    cur_piece.get_start(), 
-    cur_piece.num_lines() + 1
-  );
-  ++cursor.line;
-  cursor.pos = 0;
-
-  return 0;
-}
-
-int Buffer::tab() {
-  const Piece& cur_piece = pieces[cursor.piece];
-  std::vector<std::string>& cur_source = sources[cur_piece.get_source()];
-  const std::string& cur_line = cur_source[cursor.line];
-  const std::string prefix = cur_line.substr(0, cursor.pos);
-  const std::string suffix = cur_line.substr(cursor.pos);
-  
-  // todo: magic number bad
-  int tab_size = 2 - get_rendered_cursor_pos(2) % 2;
-  std::string tab(tab_size, ' ');
-  cur_source[cursor.line] = prefix + tab + suffix;
-
-  cursor.pos += tab_size;
-
-  return 0;
-}
-
-int Buffer::cursor_up() {
-  // todo: magic number bad
-  int rpos = get_rendered_cursor_pos(2);
-
-  if (cursor.line == 0) {
-    if (cursor.piece == 0) {
-      return 0;
-    } else {
-      --cursor.piece;
-
-      cursor.line = pieces[cursor.piece].num_lines() - 1;
-    }
-  } else {
-    --cursor.line;
+  if (line + remove_line < cur_piece.lines) {
+    Piece piece(
+      cur_piece.source, 
+      cur_piece.start + (line + remove_line), 
+      cur_piece.lines - (line + remove_line)
+    );
+    pieces.insert(it, piece);
+    ++n_pieces;
   }
 
-  const Piece& cur_piece = pieces[cursor.piece];
-  std::vector<std::string>& cur_source = sources[cur_piece.get_source()];
-  const std::string& cur_line = cur_source[cursor.line];
-  cursor.pos = 0;
-  // todo: inefficient
-  while (cursor.pos < (int) cur_line.length() && get_rendered_cursor_pos(2) < rpos) {
-    ++cursor.pos;
-  }
-  
-  return 0;
+  return new Unsplit(piece, line, n_pieces, cur_piece);
 }
 
-int Buffer::cursor_down() {
-  // todo: magic number bad
-  int rpos = get_rendered_cursor_pos(2);
-
-  if (cursor.line == pieces[cursor.piece].num_lines() - 1) {
-    if (cursor.piece == (int) pieces.size() - 1) {
-      return 0;
-    } else {
-      ++cursor.piece;
-
-      cursor.line = 0;
-    }
-  } else {
-    ++cursor.line;
+Command* Buffer::unsplit(int piece, int line, int n_pieces, Piece orig_piece) {
+  auto it = pieces.begin() + piece;
+  int lines = 0;
+  for (int i = 0; i < n_pieces; ++i) {
+    lines += it->lines;
+    it = pieces.erase(it);
   }
 
-  const Piece& cur_piece = pieces[cursor.piece];
-  std::vector<std::string>& cur_source = sources[cur_piece.get_source()];
-  const std::string& cur_line = cur_source[cursor.line];
-  cursor.pos = 0;
-  // todo: inefficient
-  while (cursor.pos < (int) cur_line.length() && get_rendered_cursor_pos(2) < rpos) {
-    ++cursor.pos;
-  }
-  
-  return 0;
+  pieces.insert(it, orig_piece);
+
+  return new Split(piece, line, orig_piece.lines > lines);
 }
 
-int Buffer::cursor_left() {
-  if (cursor.pos > 0) {
-    --cursor.pos;
-    return 0;
-  }
-  
-  return 0;
+Command* Buffer::insert(int index, std::vector<std::string> source) {
+  sources.push_back(source);
+
+  Piece piece(sources.size() - 1, 0, source.size());
+  pieces.insert(pieces.begin() + index, piece);
+
+  return new Uninsert(index);
 }
 
-int Buffer::cursor_right(int block) {
-  const Piece& cur_piece = pieces[cursor.piece];
-  std::vector<std::string>& cur_source = sources[cur_piece.get_source()];
-  const std::string& cur_line = cur_source[cursor.line];
-  
-  if (cursor.pos < (int) cur_line.length() - block) {
-    ++cursor.pos;
-    return 0;
-  }
-  
-  return 0;
-}
+Command* Buffer::uninsert(int index) {
+  pieces.erase(pieces.begin() + index);
 
-int Buffer::cursor_normalize() {
-  const Piece& cur_piece = pieces[cursor.piece];
-  std::vector<std::string>& cur_source = sources[cur_piece.get_source()];
-  const std::string& cur_line = cur_source[cursor.line];
+  std::vector<std::string> source = sources.back();
+  sources.pop_back();
 
-  if (cursor.pos >= (int) cur_line.length()) {
-    cursor.pos = cur_line.length() - 1;
-  }
-  
-  return 0;
+  return new Insert(index, source);
 }

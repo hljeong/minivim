@@ -1,37 +1,50 @@
 #ifndef MINIVIM_H
 #define MINIVIM_H
 
-#include <functional>
 #include <map>
+#include <string>
+#include <vector>
 #include "buffer.h"
 #include "command.h"
+#include "config.h"
 #include "console.h"
+#include "cursor.h"
+#include "viewport.h"
 
 #define INSERT_MODE 0
 #define NORMAL_MODE 1
 #define NUM_MODES 2
 
 class Minivim {
-  int mode;
   Buffer buffer;
+  CommandBuffer command_buffer;
+  Config config;
   Console console;
+  Cursor cursor;
+  Viewport viewport;
   std::vector<std::string> mode_strings;
   std::vector<std::map<int, Command*>> commands;
   std::vector<std::map<int, int>> mode_transitions;
 
 public: 
   Minivim() : 
-    mode(NORMAL_MODE), 
     buffer(), 
-    console(buffer), 
+    command_buffer(), 
+    config(), 
+    console(), 
+    cursor(0, 0, 0), 
+    viewport(), 
     mode_strings(NUM_MODES), 
     commands(NUM_MODES), 
     mode_transitions(NUM_MODES) {}
 
   Minivim(std::string filename) : 
-    mode(NORMAL_MODE), 
     buffer(filename), 
-    console(buffer), 
+    command_buffer(), 
+    config(), 
+    console(), 
+    cursor(0, 0, 0), 
+    viewport(), 
     mode_strings(NUM_MODES), 
     commands(NUM_MODES),
     mode_transitions(NUM_MODES) {}
@@ -47,7 +60,9 @@ public:
 
   int init();
 
-  int render();
+  int input(int ch);
+
+  int render() const;
 
   int run();
 };

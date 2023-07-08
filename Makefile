@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -Wall -g -I lib
+CFLAGS = -Wall -g -std=c++17 -I lib
 LIBS = -lncurses
 
 SRC_PATH = src
